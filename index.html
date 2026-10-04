@@ -3,100 +3,97 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#101214">
+  <meta name="apple-mobile-web-app-capable" content="yes">
   <title>Tire Roll</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow+Condensed:wght@500;600;700;800&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&display=swap">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body data-state="title">
-  <canvas id="scene" aria-label="3D view of a tire rolling down a hill"></canvas>
-  <div class="vignette" aria-hidden="true"></div>
+  <canvas id="scene" aria-label="A tire rolling down a mountain"></canvas>
+  <div class="shade" aria-hidden="true"></div>
 
-  <!-- Title -->
   <section class="screen title" data-screen="title">
-    <div class="title-block">
-      <p class="eyebrow">A downhill physics ride</p>
-      <h1 class="logo"><span>Tire</span><span>Roll</span></h1>
-      <p class="tagline">Let go at the top. Gravity, bumps and banked turns do the rest.</p>
-      <div class="menu">
-        <button id="btn-roll" class="btn primary"><span>Roll</span><kbd>Enter</kbd></button>
-        <button id="btn-hills" class="btn"><span>Choose a hill</span></button>
-        <button id="btn-sound" class="btn ghost" aria-pressed="true"><span>Sound on</span></button>
-      </div>
+    <h1 class="wordmark">Tire Roll</h1>
+    <nav class="menu" aria-label="Main menu">
+      <button id="m-mountain" class="item">Roll down a mountain</button>
+      <button id="m-endless" class="item">Endless slope</button>
+      <button id="m-sound" class="item minor">Sound on</button>
+      <button id="m-quality" class="item minor">Graphics: high</button>
+    </nav>
+    <p class="caption">In the background: <span id="title-place">Alpine Meadow</span></p>
+  </section>
+
+  <section class="screen places" data-screen="places" hidden>
+    <button id="places-back" class="back">Back</button>
+    <div class="places-inner">
+      <h2 id="places-title">Choose a mountain</h2>
+      <p id="places-note" class="note-text"></p>
+      <div id="places-list" class="places-list"></div>
     </div>
-    <p class="title-foot">Now showing <strong id="title-map">Greenhill Meadow</strong> · <kbd>C</kbd> camera · <kbd>M</kbd> mute</p>
   </section>
 
-  <!-- Hill select -->
-  <section class="screen select" data-screen="select" hidden>
-    <header class="select-head">
-      <button id="btn-back" class="btn ghost small"><span>Back</span></button>
-      <h2>Choose a hill</h2>
-    </header>
-    <div id="cards" class="cards"></div>
-  </section>
-
-  <!-- HUD -->
   <div id="hud" class="hud" hidden>
     <div class="hud-top">
-      <div class="hud-chip"><span id="hud-map">Greenhill Meadow</span><span class="sep"></span><span id="hud-time" class="num">0:00.00</span></div>
-      <div class="hud-buttons">
-        <button id="btn-cam" class="btn ghost small"><span>Chase</span></button>
-        <button id="btn-sound2" class="btn ghost small" aria-pressed="true"><span>Sound on</span></button>
-        <button id="btn-pause" class="btn ghost small" aria-label="Pause"><span>Pause</span></button>
+      <p class="hud-where"><span id="hud-place">Alpine Meadow</span> · <span id="hud-mode">Mountain</span> · <span id="hud-time" class="num">0:00.00</span></p>
+      <div class="hud-actions">
+        <button id="h-cam" class="link">Follow</button>
+        <button id="h-sound" class="link">Mute</button>
+        <button id="h-pause" class="link">Pause</button>
       </div>
     </div>
-    <div id="hud-air" class="hud-air"></div>
+    <p id="hud-air" class="hud-air"></p>
     <div class="hud-bottom">
-      <div class="speedo"><span id="hud-speed" class="num">0</span><span class="unit">km/h</span></div>
-      <div class="progress">
-        <div class="progress-labels"><span>Top</span><span id="hud-dist" class="num">0 m</span><span>Bottom</span></div>
-        <div id="hud-bar" class="bar"><i></i><b></b></div>
-      </div>
-    </div>
-    <div id="intro" class="intro"><span class="intro-sub">Letting go on</span><span id="intro-name">Greenhill Meadow</span></div>
-  </div>
-  <div id="toast" class="toast" role="status"></div>
-
-  <!-- Pause -->
-  <section class="screen pause" data-screen="pause" hidden>
-    <div class="panel">
-      <h2>Paused</h2>
-      <button id="btn-resume" class="btn primary"><span>Resume</span></button>
-      <button id="btn-restart" class="btn"><span>Roll again</span></button>
-      <button id="btn-quit" class="btn ghost"><span>Main menu</span></button>
-    </div>
-  </section>
-
-  <!-- Results -->
-  <section class="screen results" data-screen="results" hidden>
-    <div class="panel wide">
-      <p class="eyebrow">Came to rest on</p>
-      <h2 id="res-map">Greenhill Meadow</h2>
-      <div class="res-time num" id="res-time">0:00.00</div>
-      <p class="res-best" id="res-best"></p>
-      <dl class="stats">
-        <div><dt>Top speed</dt><dd><span id="res-top" class="num">0</span> km/h</dd></div>
-        <div><dt>Longest air</dt><dd><span id="res-air" class="num">0</span> s</dd></div>
-        <div><dt>Jumps</dt><dd><span id="res-jumps" class="num">0</span></dd></div>
-        <div><dt>Vertical drop</dt><dd><span id="res-drop" class="num">0</span> m</dd></div>
+      <p class="speed"><span id="hud-speed" class="num">0</span><span class="unit">km/h</span></p>
+      <dl class="readout">
+        <div><dt>Rolled</dt><dd id="hud-dist" class="num">0 m</dd></div>
+        <div><dt>Descended</dt><dd id="hud-drop" class="num">0 m</dd></div>
       </dl>
-      <div class="row">
-        <button id="btn-again" class="btn"><span>Roll again</span></button>
-        <button id="btn-next" class="btn primary"><span>Next hill</span></button>
-      </div>
-      <button id="btn-menu" class="btn ghost small"><span>Main menu</span></button>
+    </div>
+  </div>
+  <p id="note" class="note" role="status"></p>
+
+  <section class="screen pause" data-screen="pause" hidden>
+    <div class="sheet">
+      <h2>Paused</h2>
+      <button id="p-resume" class="item">Resume</button>
+      <button id="p-again" class="item">Let go again</button>
+      <button id="p-end" class="item" hidden>End run</button>
+      <button id="p-menu" class="item minor">Main menu</button>
     </div>
   </section>
 
-  <div id="fatal" class="fatal" hidden>This game needs WebGL. Try a recent version of Chrome, Edge, Firefox or Safari.</div>
+  <section class="screen results" data-screen="results" hidden>
+    <div class="sheet wide">
+      <p class="kicker"><span id="res-title">Came to rest</span> on <span id="res-place">Alpine Meadow</span></p>
+      <p class="big"><span id="res-dist" class="num">0.00</span><span class="unit">km</span></p>
+      <p id="res-best" class="sub"></p>
+      <dl class="table">
+        <div><dt>Time rolling</dt><dd id="res-time" class="num"></dd></div>
+        <div><dt>Height lost</dt><dd id="res-drop" class="num"></dd></div>
+        <div><dt>Top speed</dt><dd id="res-top" class="num"></dd></div>
+        <div><dt>Longest air</dt><dd id="res-air" class="num"></dd></div>
+        <div><dt>Times airborne</dt><dd id="res-jumps" class="num"></dd></div>
+        <div><dt>Trees and rocks hit</dt><dd id="res-hits" class="num"></dd></div>
+      </dl>
+      <div class="actions">
+        <button id="r-again" class="item">Let go again</button>
+        <button id="r-places" class="item">Somewhere else</button>
+        <button id="r-menu" class="item minor">Main menu</button>
+      </div>
+    </div>
+  </section>
+
+  <div id="fade" class="fade" aria-hidden="true"></div>
+  <p id="loading" class="loading" hidden>Building the mountain…</p>
+  <div id="fatal" class="fatal" hidden>This needs WebGL. Try a recent Chrome, Edge, Firefox or Safari.</div>
 
   <script src="lib/three.min.js"></script>
   <script src="js/util.js"></script>
   <script src="js/maps.js"></script>
-  <script src="js/level.js"></script>
-  <script src="js/course.js"></script>
+  <script src="js/terrain.js"></script>
   <script src="js/sim.js"></script>
   <script src="js/assets.js"></script>
   <script src="js/world3d.js"></script>
