@@ -100,7 +100,7 @@
       const u = s / 95 + nA(x / 170, s / 300) * 3.2;
       const fr = u - Math.floor(u);
       const patch = TR.clamp(nG(x / 140, s / 200) * 2.6 - 0.55, 0, 1) * TR.clamp(nG(x / 47 + 9, s / 61) + 0.6, 0, 1);
-      y -= T.ledge * patch * (TR.smooth(TR.clamp((fr - 0.86) / 0.05, 0, 1)) - fr);
+      y -= T.ledge * 0.85 * patch * (TR.smooth(TR.clamp((fr - 0.84) / 0.1, 0, 1)) - fr);
       if (T.dunes) {
         // longitudinal (seif) dunes: crests run down the slope
         const ph = x * 0.03 + s * 0.003 + nA(x / 160, s / 400) * 3;

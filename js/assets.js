@@ -88,6 +88,7 @@
           const crack = Math.abs(tileFbm(n, u + 0.37, v + 0.11, 8, 3));
           if (crack < 0.035) f *= 0.55 + crack * 8;
         }
+        if (type.includes('snow')) f += Math.sin((v * 3 + u + tileFbm(n2, u, v, 4, 2) * 0.25) * Math.PI * 22) * 0.05; // wind ripples
         if (type === 'sand' || type === 'redsand') f += Math.sin((u * 2 + tileFbm(n2, u, v, 4, 2) * 0.15) * Math.PI * 28) * 0.06;
         tmp.copy(cc).lerp(ca, TR.clamp(f * 1.6, 0, 1)).lerp(cb, TR.clamp(f * 1.6 - 0.8, 0, 1));
         const k = 1 + fine * (type.includes('snow') ? 0.07 : 0.14);
@@ -120,7 +121,7 @@
     } else if (type.includes('snow')) {
       for (let i = 0; i < 2500; i++) dot(R() * S, R() * S, 0.6, '#ffffff', 0.5 + R() * 0.5);
     } else {
-      for (let i = 0; i < 2200; i++) dot(R() * S, R() * S, 0.5 + R() * (rockish ? 1.4 : 2.2), R() < 0.5 ? P.speck : P.c, 0.15 + R() * 0.35);
+      for (let i = 0; i < 1800; i++) dot(R() * S, R() * S, 0.5 + R() * (rockish ? 1.4 : 1.8), R() < 0.5 ? P.speck : P.c, rockish ? 0.12 + R() * 0.3 : 0.05 + R() * 0.14);
     }
     g.globalAlpha = 1;
     return (cache[type] = tex(c, { repeat: true }));
@@ -153,6 +154,35 @@
     return (cache[key] = tex(c, { repeat: true }));
   };
 
+  // Cut-out textures: canvas stores transparent pixels as black, which mip
+  // filtering smears into every leaf edge (dark trees in the distance). Copy
+  // into a DataTexture with the average leaf colour bled into the clear pixels.
+  function cutoutTex(c) {
+    const S = c.width, H = c.height;
+    const src = c.getContext('2d').getImageData(0, 0, S, H).data;
+    let r = 0, g = 0, b = 0, n = 0;
+    for (let i = 0; i < src.length; i += 4) if (src[i + 3] > 128) { r += src[i]; g += src[i + 1]; b += src[i + 2]; n++; }
+    r /= n || 1; g /= n || 1; b /= n || 1;
+    const out = new Uint8Array(S * H * 4);
+    for (let y = 0; y < H; y++) for (let x = 0; x < S; x++) {
+      const si = (y * S + x) * 4, di = ((H - 1 - y) * S + x) * 4; // flip: v=0 at the bottom
+      const a = src[si + 3];
+      const k = a / 255;
+      out[di] = src[si] * k + r * (1 - k);
+      out[di + 1] = src[si + 1] * k + g * (1 - k);
+      out[di + 2] = src[si + 2] * k + b * (1 - k);
+      out[di + 3] = a;
+    }
+    const t = new THREE.DataTexture(out, S, H, THREE.RGBAFormat);
+    t.encoding = THREE.sRGBEncoding;
+    t.minFilter = THREE.LinearMipmapLinearFilter;
+    t.magFilter = THREE.LinearFilter;
+    t.generateMipmaps = true;
+    t.anisotropy = 8;
+    t.needsUpdate = true;
+    return t;
+  }
+
   // A branch card: a stem along v with needles/leaves either side, on transparency.
   A.foliageTex = function (kind) {
     if (cache['fol' + kind]) return cache['fol' + kind];
@@ -172,10 +202,10 @@
       }
     } else {
       // conifer branch: stem along the card, needle sprays either side
-      const dark = kind.startsWith('fir') ? ['#1f3a22', '#2a4a2a', '#183020'] : ['#2c4a26', '#3a5a2e', '#22401f'];
+      const dark = kind.startsWith('fir') ? ['#244a2a', '#2f5a32', '#1c3a24', '#3d6a3a'] : ['#33592b', '#456b34', '#284a24', '#5a7a3c'];
       g.lineCap = 'round';
       for (let side = 0; side < 2; side++) {
-        for (let i = 0; i < 520; i++) {
+        for (let i = 0; i < 900; i++) {
           const t = R();
           const x0 = 128 + (R() - 0.5) * 6, y0 = 250 - t * 240;
           const spread = (1 - t) * 105 + 18;
@@ -190,15 +220,15 @@
       g.strokeStyle = '#3a2c1e'; g.lineWidth = 4;
       g.beginPath(); g.moveTo(128, 255); g.lineTo(128, 10); g.stroke();
       if (snow) {
-        for (let i = 0; i < 260; i++) {
+        for (let i = 0; i < 700; i++) {
           const t = R();
-          const x = 128 + (R() - 0.5) * ((1 - t) * 190 + 20), y = 250 - t * 230;
-          g.fillStyle = 'rgba(250,252,255,0.95)';
-          g.beginPath(); g.ellipse(x, y, 4 + R() * 7, 2 + R() * 3, 0, 0, 6.283); g.fill();
+          const x = 128 + (R() - 0.5) * ((1 - t) * 200 + 20), y = 250 - t * 235;
+          g.fillStyle = R() < 0.7 ? 'rgba(250,252,255,0.97)' : 'rgba(214,226,240,0.95)';
+          g.beginPath(); g.ellipse(x, y, 5 + R() * 9, 2.5 + R() * 4, (R() - 0.5) * 0.6, 0, 6.283); g.fill();
         }
       }
     }
-    return (cache['fol' + kind] = tex(c));
+    return (cache['fol' + kind] = cutoutTex(c));
   };
 
   A.grassTex = function (base, tip) {
@@ -206,20 +236,51 @@
     if (cache[key]) return cache[key];
     const [c, g] = canvas(256, 256);
     const R = TR.rng(77);
-    for (let i = 0; i < 140; i++) {
-      const x = 10 + R() * 236, h = 120 + R() * 130, bend = (R() - 0.5) * 70;
+    for (let i = 0; i < 320; i++) {
+      const x = 8 + R() * 240, h = 70 + R() * 170, bend = (R() - 0.5) * 80;
       const gr = g.createLinearGradient(0, 256, 0, 256 - h);
-      gr.addColorStop(0, '#2a3a18');
+      gr.addColorStop(0, TR.mix(base, '#000000', 0.25));
       gr.addColorStop(0.35, base);
       gr.addColorStop(1, tip);
       g.strokeStyle = gr;
-      g.lineWidth = 2 + R() * 2.5;
+      g.lineWidth = 1.4 + R() * 1.8;
       g.lineCap = 'round';
       g.beginPath(); g.moveTo(x, 256);
       g.quadraticCurveTo(x + bend * 0.3, 256 - h * 0.6, x + bend, 256 - h); g.stroke();
     }
-    return (cache[key] = tex(c));
+    return (cache[key] = cutoutTex(c));
   };
+
+  // Soft tileable noise (red channel) used for drifting cloud shadows.
+  A.noiseTex = function () {
+    if (cache.noise) return cache.noise;
+    const S = 256;
+    const [c, g] = canvas(S, S);
+    const n = pnoise(991);
+    const img = g.createImageData(S, S);
+    for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
+      const v = tileFbm(n, x / S, y / S, 4, 5) * 0.5 + 0.5;
+      const i = (y * S + x) * 4;
+      img.data[i] = img.data[i + 1] = img.data[i + 2] = TR.clamp(v, 0, 1) * 255;
+      img.data[i + 3] = 255;
+    }
+    g.putImageData(img, 0, 0);
+    const t = new THREE.CanvasTexture(c);
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    return (cache.noise = t);
+  };
+
+  // Bake ambient occlusion into vertex colors: fn(x,y,z) -> brightness.
+  function aoColors(geo, fn) {
+    const p = geo.attributes.position;
+    const c = new Float32Array(p.count * 3);
+    for (let i = 0; i < p.count; i++) {
+      const v = fn(p.getX(i), p.getY(i), p.getZ(i));
+      c[i * 3] = c[i * 3 + 1] = c[i * 3 + 2] = v;
+    }
+    geo.setAttribute('color', new THREE.BufferAttribute(c, 3));
+    return geo;
+  }
 
   A.softDot = function () {
     if (cache.dot) return cache.dot;
@@ -340,7 +401,13 @@
       const y0 = H - 1.4, y1 = H + 0.6;
       quad(pos, nor, uv, V(-dx, y0, -dz), V(dx, y0, dz), V(dx * 0.2, y1, dz * 0.2), V(-dx * 0.2, y1, -dz * 0.2), V(0, 1, 0));
     }
-    return geom(pos, nor, uv);
+    // darker near the trunk and in the lower, shaded part of the crown
+    return aoColors(geom(pos, nor, uv), (x, y, z) => {
+      const t = TR.clamp((y - base) / (H - base), 0, 1);
+      const rmax = opts.radius * Math.pow(1 - t, 0.85) + 0.35;
+      const out = TR.clamp(Math.hypot(x, z) / rmax, 0, 1);
+      return (0.55 + 0.45 * Math.pow(out, 0.7)) * (0.8 + 0.2 * t);
+    });
   };
 
   // Leafy crown: clusters of leaf cards with spherical normals.
@@ -359,7 +426,10 @@
       const n = p.clone().sub(c).normalize().add(V(0, 0.35, 0)).normalize();
       quad(pos, nor, uv, p.clone().sub(ax).sub(bx), p.clone().add(ax).sub(bx), p.clone().add(ax).add(bx), p.clone().sub(ax).add(bx), n);
     }
-    return geom(pos, nor, uv);
+    return aoColors(geom(pos, nor, uv), (x, y, z) => {
+      const d = Math.hypot(x / opts.rx, (y - opts.cy) / opts.ry, z / opts.rx);
+      return (0.6 + 0.4 * TR.clamp(d, 0, 1)) * (0.8 + 0.2 * TR.clamp((y - opts.cy) / opts.ry + 0.5, 0, 1));
+    });
   };
 
   A.grassClump = function () {

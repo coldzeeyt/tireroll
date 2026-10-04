@@ -15,10 +15,14 @@ for (const map of TR.MAPS) {
   const lines = [];
   for (let i = 0; i < rolls; i++) {
     const sim = new TR.Sim(W, 1000 + i * 7919);
-    while (!sim.settled && sim.time < 900) sim.step(1 / 240);
+    let mid = null;
+    while (!sim.settled && sim.time < 900) {
+      sim.step(1 / 240);
+      if (!mid && sim.time >= 40) mid = [sim.tire.x, -sim.tire.z];
+    }
     const t = sim.tire;
     if (!sim.settled) ok = false;
-    ends.push([t.x, -t.z]);
+    ends.push(mid || [t.x, -t.z]); // where each roll is after 40 s: paths differ even if they end in the same hollow
     lines.push(`   roll ${i}: ${sim.settled ? 'rest' : 'STILL MOVING'} after ${sim.time.toFixed(0)}s, ${(sim.distance / 1000).toFixed(2)} km, drop ${sim.drop().toFixed(0)} m, ` +
       `top ${(sim.maxSpeed * 3.6).toFixed(0)} km/h, air ${sim.maxAir.toFixed(1)}s, jumps ${sim.jumps}, hits ${sim.hits}`);
   }
@@ -36,7 +40,7 @@ for (const map of TR.MAPS) {
   }
   const eOk = es.distance > 3000;
   if (!eOk) ok = false;
-  console.log(`${map.id}: mountain spread ${spread.toFixed(0)} m | endless 10 min: ${(es.distance / 1000).toFixed(1)} km, drop ${es.drop().toFixed(0)} m, ` +
+  console.log(`${map.id}: path spread after 40 s ${spread.toFixed(0)} m | endless 10 min: ${(es.distance / 1000).toFixed(1)} km, drop ${es.drop().toFixed(0)} m, ` +
     `top ${(es.maxSpeed * 3.6).toFixed(0)} km/h, re-releases ${releases}, jumps ${es.jumps} ${eOk ? '' : 'TOO SHORT'} [${Date.now() - t0} ms]`);
   console.log(lines.join('\n'));
 }

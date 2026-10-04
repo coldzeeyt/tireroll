@@ -25,6 +25,7 @@
       this.world = new TR.World3D(renderer);
       this.audio = new TR.Audio();
       this.quality = store.get('quality', isPhone() ? 'low' : 'high');
+      this.makePost();
       this.mapIndex = store.get('map', 0);
       this.mode = store.get('mode', 'mountain');
       this.camMode = store.get('cam', 0);
@@ -45,6 +46,16 @@
       requestAnimationFrame((t) => this.frame(t));
     }
 
+    makePost() {
+      this.post = new TR.Post(this.renderer, this.quality);
+      // with post-processing the scene stays linear HDR and the composite tone maps
+      this.renderer.toneMapping = this.post.enabled ? THREE.NoToneMapping : THREE.ACESFilmicToneMapping;
+    }
+
+    render() {
+      this.post.render(this.scene, this.camera, this.world.sunDir, this.time);
+    }
+
     terrain(i, mode) {
       const k = i + mode;
       if (!this.terrains[k]) this.terrains[k] = TR.buildTerrain(TR.MAPS[i], mode);
@@ -60,6 +71,7 @@
       this.scene = this.world.build(W, this.quality);
       this.world.prime(this.sim.tire.x, this.sim.tire.z);
       this.fx = new TR.FX(this.scene, W.map, this.renderer.getPixelRatio());
+      this.post.setLook(W.map, this.world.sunColor);
       this.attract = !!attract;
       this.hold = attract ? 0 : 1.2;
       this.snapCamera();
@@ -75,6 +87,7 @@
       const maxPR = TR.QUALITY[this.quality || 'high'].pixel;
       this.renderer.setPixelRatio(Math.min(devicePixelRatio || 1, maxPR));
       this.renderer.setSize(w, h, false);
+      if (this.post) this.post.setSize(w, h, this.renderer.getPixelRatio());
       this.camera.aspect = w / h;
       this.portrait = h > w * 1.1;
       document.body.classList.toggle('portrait', this.portrait);
@@ -140,6 +153,7 @@
       this.quality = q;
       store.set('quality', q);
       this.syncLabels();
+      this.makePost();
       this.resize();
       this.load(this.mapIndex, this.runMode, this.attract);
     }
@@ -252,7 +266,8 @@
       this.camDir.x += (dx - this.camDir.x) * k;
       this.camDir.z += (dz - this.camDir.z) * k;
       const l = Math.hypot(this.camDir.x, this.camDir.z) || 1;
-      const fx = this.camDir.x / l, fz = this.camDir.z / l;
+      let fx = this.camDir.x / l, fz = this.camDir.z / l;
+      if (!isFinite(fx) || !isFinite(fz)) { fx = 0; fz = -1; this.camDir = { x: 0, z: -1 }; }
       const pos = new THREE.Vector3(), look = new THREE.Vector3(t.x, t.y + 0.3, t.z);
       let mode = this.attract ? 4 : this.camMode;
       const time = this.time;
@@ -304,7 +319,10 @@
 
     updateCamera(dt) {
       const { pos, look } = this.camTarget(dt);
-      if (this.snapNext) { this.camPos.copy(pos); this.snapNext = false; }
+      const t = this.sim.tire;
+      const far = Math.hypot(this.camPos.x - t.x, this.camPos.y - t.y, this.camPos.z - t.z);
+      // never let the camera drift away (or go non-finite): snap back to its target
+      if (this.snapNext || !(far < 400)) { this.camPos.copy(pos); this.camLook.copy(look); this.snapNext = false; }
       const fixed = this.camMode === 2 && !this.attract;
       this.camPos.lerp(pos, 1 - Math.exp(-dt * (fixed ? 40 : 5)));
       this.camLook.lerp(look, 1 - Math.exp(-dt * 9));
@@ -349,7 +367,7 @@
         if (this.state === 'rolling') this.updateHUD();
       }
       this.world.update(this.sim, this.camera, this.time, dt);
-      this.renderer.render(this.scene, this.camera);
+      this.render();
       requestAnimationFrame((t) => this.frame(t));
     }
 
