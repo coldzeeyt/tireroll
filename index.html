@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Tire Roll</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow+Condensed:wght@500;600;700;800&display=swap">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body data-state="title">
+  <canvas id="scene" aria-label="3D view of a tire rolling down a hill"></canvas>
+  <div class="vignette" aria-hidden="true"></div>
+
+  <!-- Title -->
+  <section class="screen title" data-screen="title">
+    <div class="title-block">
+      <p class="eyebrow">A downhill physics ride</p>
+      <h1 class="logo"><span>Tire</span><span>Roll</span></h1>
+      <p class="tagline">Let go at the top. Gravity, bumps and banked turns do the rest.</p>
+      <div class="menu">
+        <button id="btn-roll" class="btn primary"><span>Roll</span><kbd>Enter</kbd></button>
+        <button id="btn-hills" class="btn"><span>Choose a hill</span></button>
+        <button id="btn-sound" class="btn ghost" aria-pressed="true"><span>Sound on</span></button>
+      </div>
+    </div>
+    <p class="title-foot">Now showing <strong id="title-map">Greenhill Meadow</strong> · <kbd>C</kbd> camera · <kbd>M</kbd> mute</p>
+  </section>
+
+  <!-- Hill select -->
+  <section class="screen select" data-screen="select" hidden>
+    <header class="select-head">
+      <button id="btn-back" class="btn ghost small"><span>Back</span></button>
+      <h2>Choose a hill</h2>
+    </header>
+    <div id="cards" class="cards"></div>
+  </section>
+
+  <!-- HUD -->
+  <div id="hud" class="hud" hidden>
+    <div class="hud-top">
+      <div class="hud-chip"><span id="hud-map">Greenhill Meadow</span><span class="sep"></span><span id="hud-time" class="num">0:00.00</span></div>
+      <div class="hud-buttons">
+        <button id="btn-cam" class="btn ghost small"><span>Chase</span></button>
+        <button id="btn-sound2" class="btn ghost small" aria-pressed="true"><span>Sound on</span></button>
+        <button id="btn-pause" class="btn ghost small" aria-label="Pause"><span>Pause</span></button>
+      </div>
+    </div>
+    <div id="hud-air" class="hud-air"></div>
+    <div class="hud-bottom">
+      <div class="speedo"><span id="hud-speed" class="num">0</span><span class="unit">km/h</span></div>
+      <div class="progress">
+        <div class="progress-labels"><span>Top</span><span id="hud-dist" class="num">0 m</span><span>Bottom</span></div>
+        <div id="hud-bar" class="bar"><i></i><b></b></div>
+      </div>
+    </div>
+    <div id="intro" class="intro"><span class="intro-sub">Letting go on</span><span id="intro-name">Greenhill Meadow</span></div>
+  </div>
+  <div id="toast" class="toast" role="status"></div>
+
+  <!-- Pause -->
+  <section class="screen pause" data-screen="pause" hidden>
+    <div class="panel">
+      <h2>Paused</h2>
+      <button id="btn-resume" class="btn primary"><span>Resume</span></button>
+      <button id="btn-restart" class="btn"><span>Roll again</span></button>
+      <button id="btn-quit" class="btn ghost"><span>Main menu</span></button>
+    </div>
+  </section>
+
+  <!-- Results -->
+  <section class="screen results" data-screen="results" hidden>
+    <div class="panel wide">
+      <p class="eyebrow">Came to rest on</p>
+      <h2 id="res-map">Greenhill Meadow</h2>
+      <div class="res-time num" id="res-time">0:00.00</div>
+      <p class="res-best" id="res-best"></p>
+      <dl class="stats">
+        <div><dt>Top speed</dt><dd><span id="res-top" class="num">0</span> km/h</dd></div>
+        <div><dt>Longest air</dt><dd><span id="res-air" class="num">0</span> s</dd></div>
+        <div><dt>Jumps</dt><dd><span id="res-jumps" class="num">0</span></dd></div>
+        <div><dt>Vertical drop</dt><dd><span id="res-drop" class="num">0</span> m</dd></div>
+      </dl>
+      <div class="row">
+        <button id="btn-again" class="btn"><span>Roll again</span></button>
+        <button id="btn-next" class="btn primary"><span>Next hill</span></button>
+      </div>
+      <button id="btn-menu" class="btn ghost small"><span>Main menu</span></button>
+    </div>
+  </section>
+
+  <div id="fatal" class="fatal" hidden>This game needs WebGL. Try a recent version of Chrome, Edge, Firefox or Safari.</div>
+
+  <script src="lib/three.min.js"></script>
+  <script src="js/util.js"></script>
+  <script src="js/maps.js"></script>
+  <script src="js/level.js"></script>
+  <script src="js/course.js"></script>
+  <script src="js/sim.js"></script>
+  <script src="js/assets.js"></script>
+  <script src="js/world3d.js"></script>
+  <script src="js/fx.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/game.js"></script>
+</body>
+</html>
