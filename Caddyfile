@@ -1,0 +1,6 @@
+:{$PORT:8080} {
+	root * /srv
+	encode gzip zstd
+	header /lib/* Cache-Control "public, max-age=604800"
+	file_server
+}
